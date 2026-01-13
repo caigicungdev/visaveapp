@@ -7,6 +7,9 @@ from typing import Optional
 from datetime import datetime
 
 from config import DOWNLOAD_DIR, OPENAI_API_KEY, HOST, PORT
+
+# Cookies file path for YouTube authentication
+COOKIES_FILE = os.path.join(os.path.dirname(__file__), "cookies.txt")
 from models import (
     TaskType, 
     DownloadResult, 
@@ -60,8 +63,11 @@ def get_video_info(url: str) -> dict:
             "--dump-json",
             "--no-download",
             "--no-warnings",
-            url
         ]
+        # Add cookies for YouTube authentication if available
+        if os.path.exists(COOKIES_FILE):
+            cmd.extend(["--cookies", COOKIES_FILE])
+        cmd.append(url)
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         if result.returncode == 0:
             return json.loads(result.stdout)
@@ -95,6 +101,8 @@ def download_video(url: str, task_id: str, options: dict = None) -> dict:
             "--audio-format", "mp3",
             "--audio-quality", f"{audio_bitrate}K" if audio_bitrate else "320K",
         ]
+        if os.path.exists(COOKIES_FILE):
+            cmd.extend(["--cookies", COOKIES_FILE])
     else:
         # Video download with quality
         if ytdlp_format:
@@ -110,6 +118,8 @@ def download_video(url: str, task_id: str, options: dict = None) -> dict:
             "--no-playlist",
             "--merge-output-format", "mp4",
         ]
+        if os.path.exists(COOKIES_FILE):
+            cmd.extend(["--cookies", COOKIES_FILE])
     
     cmd.append(url)
     
