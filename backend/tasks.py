@@ -22,8 +22,9 @@ from models import (
 # In-memory task storage (replace with Supabase in production)
 tasks_db: dict = {}
 
-# Base URL for file downloads
-API_BASE_URL = f"http://localhost:{PORT}"
+# Base URL for file downloads (use PUBLIC_URL or fallback to localhost)
+PUBLIC_URL = os.environ.get('PUBLIC_URL', f"http://localhost:{PORT}")
+API_BASE_URL = PUBLIC_URL
 
 
 def update_task_sync(task_id: str, updates: dict):
