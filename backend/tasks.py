@@ -55,59 +55,44 @@ async def fail_task(task_id: str, error_message: str):
     })
 
 
-# Common yt-dlp options for VPS compatibility - MOBILE APP IMPERSONATION
+# Common yt-dlp options
 def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
-    """Get robust yt-dlp options for VPS environments - uses Android app impersonation"""
+    """Get yt-dlp options with Android/iOS player clients"""
     from config import PROXY_URL
     
     opts = {
-        # Format selection with fallbacks
-        'format': format_str or 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
-        
-        # HTTP headers to mimic Android YouTube app (NOT browser!)
-        'http_headers': {
-            'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 14; en_US; sdk_gphone64_x86_64 Build/UE1A.230829.036.A1) gzip',
-            'Accept': '*/*',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
-            'X-YouTube-Client-Name': '3',
-            'X-YouTube-Client-Version': '19.09.37',
-        },
-        
-        # SSL and network options
-        'nocheckcertificate': True,
-        'ignoreerrors': False,
-        'no_warnings': False,
-        'quiet': False,
-        'no_color': True,
-        
-        # Retry settings
-        'retries': 10,
-        'fragment_retries': 10,
-        'extractor_retries': 10,
-        
-        # Output options
+        # Format selection
+        'format': format_str or 'bestvideo+bestaudio/best',
         'noplaylist': True,
-        'merge_output_format': 'mp4',
         
-        # Use android_creator client with player_skip
+        # Force Android/iOS internal API (bypasses web player blocks)
         'extractor_args': {
             'youtube': {
-                'player_client': ['android_creator', 'mediaconnect'],
-                'player_skip': ['webpage', 'configs'],
+                'player_client': ['android', 'ios']
             }
         },
         
-        # Cache settings - disable to prevent stale data
-        'cachedir': False,
+        # Standard Chrome User-Agent
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+        
+        # Output options
+        'merge_output_format': 'mp4',
+        'nocheckcertificate': True,
+        'no_warnings': True,
+        'quiet': False,
+        
+        # Retry settings
+        'retries': 5,
+        'fragment_retries': 5,
     }
     
     # Add output template if provided
     if output_template:
         opts['outtmpl'] = output_template
     
-    # Add proxy if configured (CRITICAL for bypassing IP blocks)
+    # Add proxy if configured
     if PROXY_URL:
         opts['proxy'] = PROXY_URL
         print(f"🔒 Using proxy: {PROXY_URL.split('@')[-1] if '@' in PROXY_URL else PROXY_URL}")
