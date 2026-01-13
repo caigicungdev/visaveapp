@@ -63,6 +63,7 @@ def get_video_info(url: str) -> dict:
             "--dump-json",
             "--no-download",
             "--no-warnings",
+            "--extractor-args", "youtube:player_client=web",
         ]
         # Add cookies for YouTube authentication if available
         if os.path.exists(COOKIES_FILE):
@@ -97,6 +98,7 @@ def download_video(url: str, task_id: str, options: dict = None) -> dict:
             "-o", output_template,
             "--no-warnings",
             "--no-playlist",
+            "--extractor-args", "youtube:player_client=web",
             "-x",
             "--audio-format", "mp3",
             "--audio-quality", f"{audio_bitrate}K" if audio_bitrate else "320K",
@@ -117,6 +119,7 @@ def download_video(url: str, task_id: str, options: dict = None) -> dict:
             "-o", output_template,
             "--no-warnings",
             "--no-playlist",
+            "--extractor-args", "youtube:player_client=web",
             "--merge-output-format", "mp4",
         ]
         if os.path.exists(COOKIES_FILE):
