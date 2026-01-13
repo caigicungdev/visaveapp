@@ -57,49 +57,35 @@ async def fail_task(task_id: str, error_message: str):
 
 # Common yt-dlp options for VPS compatibility
 def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
-    """Get robust yt-dlp options for VPS environments"""
-    from config import PROXY_URL
-    
+    """Get yt-dlp options with Android/iOS client to bypass VPS blocks"""
     opts = {
         # Format selection
         'format': format_str or 'bestvideo+bestaudio/best',
         'noplaylist': True,
         
-        # --- CRITICAL: Force Android/iOS API instead of Web ---
+        # CRITICAL: Use Android/iOS API instead of Web to fix "player response" error
         'extractor_args': {
             'youtube': {
                 'player_client': ['android', 'ios']
             }
         },
         
-        # Fake User-Agent (Chrome on Windows)
+        # Fake User-Agent
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
         
-        # SSL and network options
+        # Other options
+        'merge_output_format': 'mp4',
         'nocheckcertificate': True,
-        'ignoreerrors': False,
-        
-        # Retry settings
         'retries': 5,
         'fragment_retries': 5,
-        
-        # Output options
-        'merge_output_format': 'mp4',
-        
-        # Cache settings
         'cachedir': False,
     }
     
     # Add output template if provided
     if output_template:
         opts['outtmpl'] = output_template
-    
-    # Add proxy if configured
-    if PROXY_URL:
-        opts['proxy'] = PROXY_URL
-        print(f"🔒 Using proxy: {PROXY_URL.split('@')[-1] if '@' in PROXY_URL else PROXY_URL}")
     
     return opts
 
