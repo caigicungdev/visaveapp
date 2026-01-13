@@ -108,7 +108,8 @@ def download_video(url: str, task_id: str, options: dict = None) -> dict:
         if ytdlp_format:
             format_str = ytdlp_format
         else:
-            format_str = "bv*+ba/b"  # Default: best video + audio
+            # Use fallback formats for better compatibility
+            format_str = "bestvideo+bestaudio/best"
         
         cmd = [
             "yt-dlp",

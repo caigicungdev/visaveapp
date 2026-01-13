@@ -28,7 +28,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./backend/downloads:/app/downloads
-      - ./backend/cookies.txt:/app/cookies.txt:ro
+      - ./backend/cookies.txt:/app/cookies.txt
     networks:
       - vtool-network
 
