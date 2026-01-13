@@ -58,6 +58,8 @@ async def fail_task(task_id: str, error_message: str):
 # Common yt-dlp options for VPS compatibility - MOBILE APP IMPERSONATION
 def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
     """Get robust yt-dlp options for VPS environments - uses Android app impersonation"""
+    from config import PROXY_URL
+    
     opts = {
         # Format selection with fallbacks
         'format': format_str or 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
@@ -89,7 +91,7 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
         'noplaylist': True,
         'merge_output_format': 'mp4',
         
-        # CRITICAL: Use 'default' which auto-selects best client, with player_skip
+        # Use android_creator client with player_skip
         'extractor_args': {
             'youtube': {
                 'player_client': ['android_creator', 'mediaconnect'],
@@ -105,8 +107,10 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
     if output_template:
         opts['outtmpl'] = output_template
     
-    # NOTE: Do NOT use cookies for Android client - it causes mismatches
-    # Cookies are for browser sessions, not app impersonation
+    # Add proxy if configured (CRITICAL for bypassing IP blocks)
+    if PROXY_URL:
+        opts['proxy'] = PROXY_URL
+        print(f"🔒 Using proxy: {PROXY_URL.split('@')[-1] if '@' in PROXY_URL else PROXY_URL}")
     
     return opts
 

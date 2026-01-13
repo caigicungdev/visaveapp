@@ -34,3 +34,6 @@ if PRODUCTION_DOMAIN:
         f"http://{PRODUCTION_DOMAIN}",
     ])
 
+# Proxy Configuration for YouTube downloads (to bypass IP blocks)
+# Format: http://user:pass@host:port or socks5://host:port
+PROXY_URL = os.getenv("PROXY_URL", "")
