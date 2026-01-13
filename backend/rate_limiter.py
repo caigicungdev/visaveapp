@@ -18,16 +18,16 @@ class RateLimitConfig:
     requests_per_day: int
     
     
-# Default rate limits for free tier
+# Default rate limits for free tier (optimized for proxy bandwidth)
 FREE_TIER_LIMITS: Dict[str, RateLimitConfig] = {
-    "download": RateLimitConfig(requests_per_hour=5, requests_per_day=15),
-    "summary": RateLimitConfig(requests_per_hour=10, requests_per_day=30),
-    "spy": RateLimitConfig(requests_per_hour=20, requests_per_day=60),
-    "slideshow": RateLimitConfig(requests_per_hour=5, requests_per_day=15),
-    "audio": RateLimitConfig(requests_per_hour=5, requests_per_day=15),
-    "remove_bg": RateLimitConfig(requests_per_hour=10, requests_per_day=30),
-    "remove_watermark": RateLimitConfig(requests_per_hour=5, requests_per_day=15),
-    "inpainting": RateLimitConfig(requests_per_hour=5, requests_per_day=15),
+    "download": RateLimitConfig(requests_per_hour=2, requests_per_day=3),      # Low - uses most bandwidth
+    "summary": RateLimitConfig(requests_per_hour=5, requests_per_day=10),      # Medium - only fetches info
+    "spy": RateLimitConfig(requests_per_hour=5, requests_per_day=10),          # Medium - only fetches info
+    "slideshow": RateLimitConfig(requests_per_hour=3, requests_per_day=5),     # Medium - downloads images
+    "audio": RateLimitConfig(requests_per_hour=2, requests_per_day=3),         # Low - uses bandwidth
+    "remove_bg": RateLimitConfig(requests_per_hour=5, requests_per_day=10),    # Medium - local processing
+    "remove_watermark": RateLimitConfig(requests_per_hour=3, requests_per_day=5), # Medium - local processing
+    "inpainting": RateLimitConfig(requests_per_hour=3, requests_per_day=5),    # Medium - local processing
 }
 
 # Premium tier gets 5x the limits
