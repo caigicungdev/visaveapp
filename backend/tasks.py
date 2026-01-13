@@ -91,13 +91,19 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
         'noplaylist': True,
         'merge_output_format': 'mp4',
         
-        # Extractor options for YouTube
+        # Extractor options for YouTube (Prioritize Android/iOS for VPS)
         'extractor_args': {
             'youtube': {
-                'player_client': ['web', 'android', 'ios'],
+                'player_client': ['android', 'ios', 'web'],
                 'skip': ['dash', 'hls'],
+            },
+            'tiktok': {
+                'app_version': ['30.0.0'],
             }
         },
+        
+        # Cache settings
+        'cachedir': False,
     }
     
     # Add output template if provided
