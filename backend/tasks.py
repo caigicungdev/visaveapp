@@ -61,20 +61,17 @@ COOKIES_PATH = "/app/cookies.txt"
 
 # Common yt-dlp options for VPS compatibility
 def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
-    """Get yt-dlp options with Android/iOS client + cookies to bypass VPS blocks"""
+    """Get yt-dlp options - uses WEB client with cookies, or ANDROID/iOS without cookies"""
+    
+    # Check if cookies exist
+    has_cookies = os.path.exists(COOKIES_PATH)
+    
     opts = {
         # Format selection
         'format': format_str or 'bestvideo+bestaudio/best',
         'noplaylist': True,
         
-        # CRITICAL: Use Android/iOS API instead of Web to fix "player response" error
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'ios']
-            }
-        },
-        
-        # Fake User-Agent
+        # Fake User-Agent (browser)
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
@@ -87,12 +84,26 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
         'cachedir': False,
     }
     
-    # Add cookies file if it exists (CRITICAL for VPS to prove "real user")
-    if os.path.exists(COOKIES_PATH):
+    # CRITICAL: Choose player_client based on cookies availability
+    # - With cookies: use WEB client (android/ios don't support cookies!)
+    # - Without cookies: use ANDROID/iOS (bypass bot detection)
+    if has_cookies:
         opts['cookiefile'] = COOKIES_PATH
-        print(f"✅ Using cookies from: {COOKIES_PATH}")
+        # Use default web client when cookies are present
+        opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['web']
+            }
+        }
+        print(f"✅ Using cookies + WEB client from: {COOKIES_PATH}")
     else:
-        print(f"⚠️ No cookies found at: {COOKIES_PATH}")
+        # No cookies - use mobile clients to bypass bot detection
+        opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['android', 'ios']
+            }
+        }
+        print(f"⚠️ No cookies - using ANDROID/iOS clients")
     
     # Add output template if provided
     if output_template:
