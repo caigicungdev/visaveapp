@@ -22,7 +22,7 @@ export const translations = {
             login: 'Login / Sign Up',
         },
         footer: {
-            about: 'About ViSave (V-Tool)',
+            about: 'About Visave App',
             aboutDesc: 'The #1 AI-powered media toolkit. Download TikTok videos without watermark, summarize YouTube content, and analyze viral metrics.',
             products: 'Tools',
             legal: 'Legal Info',

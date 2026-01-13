@@ -26,12 +26,8 @@ RUN pip install --no-cache-dir yt-dlp
 # Copy backend source code
 COPY backend/ .
 
-# Create downloads directory
-RUN mkdir -p downloads
-
-# Create non-root user
-RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
-USER appuser
+# Create downloads directory with proper permissions
+RUN mkdir -p downloads && chmod 777 downloads
 
 EXPOSE 8000
 

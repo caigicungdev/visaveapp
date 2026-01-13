@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "V-Tool | Media Processing Platform",
+  title: "Visave App | Media Processing Platform",
   description: "Download, summarize, and analyze videos from TikTok, Instagram, YouTube and more with AI-powered tools.",
   keywords: ["video downloader", "AI summary", "TikTok", "Instagram", "YouTube", "media processing"],
 };
