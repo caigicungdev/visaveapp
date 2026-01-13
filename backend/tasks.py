@@ -55,9 +55,9 @@ async def fail_task(task_id: str, error_message: str):
     })
 
 
-# Common yt-dlp options
+# Common yt-dlp options for VPS compatibility
 def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
-    """Get yt-dlp options with Android/iOS player clients"""
+    """Get robust yt-dlp options for VPS environments"""
     from config import PROXY_URL
     
     opts = {
@@ -65,27 +65,31 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
         'format': format_str or 'bestvideo+bestaudio/best',
         'noplaylist': True,
         
-        # Force Android/iOS internal API (bypasses web player blocks)
+        # --- CRITICAL: Force Android/iOS API instead of Web ---
         'extractor_args': {
             'youtube': {
                 'player_client': ['android', 'ios']
             }
         },
         
-        # Standard Chrome User-Agent
+        # Fake User-Agent (Chrome on Windows)
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
         
-        # Output options
-        'merge_output_format': 'mp4',
+        # SSL and network options
         'nocheckcertificate': True,
-        'no_warnings': True,
-        'quiet': False,
+        'ignoreerrors': False,
         
         # Retry settings
         'retries': 5,
         'fragment_retries': 5,
+        
+        # Output options
+        'merge_output_format': 'mp4',
+        
+        # Cache settings
+        'cachedir': False,
     }
     
     # Add output template if provided
