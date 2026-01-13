@@ -13,8 +13,13 @@ from datetime import datetime
 from PIL import Image
 from rembg import remove
 
-# Import routers
-from routers import inpainting
+# Import routers (optional - inpainting requires torch which is heavy)
+try:
+    from routers import inpainting
+    HAS_INPAINTING = True
+except ImportError:
+    HAS_INPAINTING = False
+    print("⚠️ Inpainting router disabled (torch not installed)")
 
 from config import SUPABASE_URL, SUPABASE_SERVICE_KEY, CORS_ORIGINS, HOST, PORT, DOWNLOAD_DIR
 from models import ProcessRequest, CreateTaskResponse, Task
@@ -88,8 +93,9 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Register routers
-app.include_router(inpainting.router)
+# Register routers (optional)
+if HAS_INPAINTING:
+    app.include_router(inpainting.router)
 
 # Configure CORS
 app.add_middleware(
