@@ -1,4 +1,6 @@
-import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
+import Script from "next/script";
+import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/providers/query-provider";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -75,13 +77,11 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  // Uncomment and add your verification codes after getting them
-  // verification: {
-  //   google: "your-google-site-verification-code",
-  //   other: {
-  //     "google-adsense-account": "ca-pub-XXXXXXXXXX",
-  //   },
-  // },
+  verification: {
+    other: {
+      "google-adsense-account": "ca-pub-3779491168688544",
+    },
+  },
   icons: {
     icon: "/assets/b-logo.png",
     apple: "/assets/b-logo.png",
@@ -108,6 +108,12 @@ export default function RootLayout({
             </LanguageProvider>
           </AuthProvider>
         </QueryProvider>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3779491168688544"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
