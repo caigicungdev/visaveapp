@@ -4,6 +4,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install system dependencies for opencv, rembg, yt-dlp
+# Node.js is required for YouTube signature solving
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libgl1 \
@@ -12,6 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     libxrender-dev \
     wget \
+    curl \
+    ca-certificates \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for caching
