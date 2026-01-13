@@ -81,17 +81,19 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
         'no_color': True,
         
         # Retry settings
-        'retries': 5,
-        'fragment_retries': 5,
+        'retries': 10,
+        'fragment_retries': 10,
+        'extractor_retries': 10,
         
         # Output options
         'noplaylist': True,
         'merge_output_format': 'mp4',
         
-        # CRITICAL: Use ONLY Android client - this bypasses most VPS blocks
+        # CRITICAL: Use 'default' which auto-selects best client, with player_skip
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'android_embedded'],
+                'player_client': ['android_creator', 'mediaconnect'],
+                'player_skip': ['webpage', 'configs'],
             }
         },
         
