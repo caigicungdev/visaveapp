@@ -58,13 +58,14 @@ async def fail_task(task_id: str, error_message: str):
 # Path to cookies file inside Docker container
 COOKIES_PATH = "/app/cookies.txt"
 
+# Webshare Rotating Residential Proxy (configured via environment variable)
+# Format: http://username:password@host:port
+PROXY_URL = os.environ.get('WEBSHARE_PROXY', '')
+
 
 # Common yt-dlp options for VPS compatibility
-def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
-    """Get yt-dlp options - uses WEB client with cookies, or ANDROID/iOS without cookies"""
-    
-    # Check if cookies exist
-    has_cookies = os.path.exists(COOKIES_PATH)
+def get_ydl_opts(output_template: str = None, format_str: str = None, use_proxy: bool = False) -> dict:
+    """Get yt-dlp options with optional proxy support"""
     
     opts = {
         # Format selection
@@ -76,6 +77,13 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
         
+        # Use Android/iOS clients (most reliable)
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios']
+            }
+        },
+        
         # Other options
         'merge_output_format': 'mp4',
         'nocheckcertificate': True,
@@ -84,26 +92,10 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
         'cachedir': False,
     }
     
-    # CRITICAL: Choose player_client based on cookies availability
-    # - With cookies: use WEB client (android/ios don't support cookies!)
-    # - Without cookies: use ANDROID/iOS (bypass bot detection)
-    if has_cookies:
-        opts['cookiefile'] = COOKIES_PATH
-        # Use default web client when cookies are present
-        opts['extractor_args'] = {
-            'youtube': {
-                'player_client': ['web']
-            }
-        }
-        print(f"✅ Using cookies + WEB client from: {COOKIES_PATH}")
-    else:
-        # No cookies - use mobile clients to bypass bot detection
-        opts['extractor_args'] = {
-            'youtube': {
-                'player_client': ['android', 'ios']
-            }
-        }
-        print(f"⚠️ No cookies - using ANDROID/iOS clients")
+    # Add proxy if requested and available
+    if use_proxy and PROXY_URL:
+        opts['proxy'] = PROXY_URL
+        print(f"✅ Using PROXY: {PROXY_URL.split('@')[-1] if '@' in PROXY_URL else PROXY_URL}")
     
     # Add output template if provided
     if output_template:
@@ -113,57 +105,43 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
 
 
 def get_video_info(url: str) -> dict:
-    """Extract video information using yt-dlp Python library with retries"""
+    """Extract video information - uses PROXY to bypass YouTube blocks"""
     import yt_dlp
     
-    # Try 1: Standard attempt (with cookies if available)
-    try:
-        ydl_opts = get_ydl_opts()
-        ydl_opts['skip_download'] = True
-        ydl_opts['extract_flat'] = False
-        
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            if info: return info
-            
-    except Exception as first_error:
-        print(f"Attempt 1 failed: {first_error}")
-        
-    # Try 2: Retry WITHOUT cookies (in case cookies are invalid/expired)
-    if os.path.exists(COOKIES_FILE):
+    # Try 1: With PROXY (recommended for VPS)
+    if PROXY_URL:
         try:
-            print("Retrying without cookies...")
-            ydl_opts = get_ydl_opts()
+            print("📡 Attempting with PROXY...")
+            ydl_opts = get_ydl_opts(use_proxy=True)
             ydl_opts['skip_download'] = True
             ydl_opts['extract_flat'] = False
-            if 'cookiefile' in ydl_opts: del ydl_opts['cookiefile'] # Remove cookies
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
-                if info: return info
+                if info: 
+                    print("✅ Success with PROXY!")
+                    return info
                 
-        except Exception as second_error:
-            print(f"Attempt 2 failed: {second_error}")
-
-    # Try 3: Retry with different client (Android) if not already used
+        except Exception as proxy_error:
+            print(f"Proxy attempt failed: {proxy_error}")
+    
+    # Try 2: Direct connection (fallback for non-YouTube or if proxy fails)
     try:
-        print("Retrying with Android client...")
-        ydl_opts = get_ydl_opts()
+        print("🔄 Attempting DIRECT connection...")
+        ydl_opts = get_ydl_opts(use_proxy=False)
         ydl_opts['skip_download'] = True
         ydl_opts['extract_flat'] = False
-        if 'cookiefile' in ydl_opts: del ydl_opts['cookiefile']
-        
-        # Force Android client
-        ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android']}}
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            if info: return info
+            if info: 
+                print("✅ Success with DIRECT connection!")
+                return info
             
-    except Exception as third_error:
-         raise Exception(f"All attempts failed. Last error: {str(third_error)}")
+    except Exception as direct_error:
+        raise Exception(f"Failed to get video info: {str(direct_error)}")
     
-    raise Exception("Failed to get video info after retries")
+    raise Exception("Failed to get video info")
 
 
 def download_video(url: str, task_id: str, options: dict = None) -> dict:
