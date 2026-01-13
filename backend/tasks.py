@@ -55,52 +55,47 @@ async def fail_task(task_id: str, error_message: str):
     })
 
 
-# Common yt-dlp options for VPS compatibility
+# Common yt-dlp options for VPS compatibility - MOBILE APP IMPERSONATION
 def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
-    """Get robust yt-dlp options for VPS environments"""
+    """Get robust yt-dlp options for VPS environments - uses Android app impersonation"""
     opts = {
         # Format selection with fallbacks
-        'format': format_str or 'bestvideo+bestaudio/bestvideo*+bestaudio/best/bestvideo/bestaudio',
+        'format': format_str or 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
         
-        # HTTP headers to mimic real browser
+        # HTTP headers to mimic Android YouTube app (NOT browser!)
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate, br',
+            'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 14; en_US; sdk_gphone64_x86_64 Build/UE1A.230829.036.A1) gzip',
+            'Accept': '*/*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate',
             'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
+            'X-YouTube-Client-Name': '3',
+            'X-YouTube-Client-Version': '19.09.37',
         },
         
         # SSL and network options
         'nocheckcertificate': True,
         'ignoreerrors': False,
-        'no_warnings': True,
-        'quiet': True,
+        'no_warnings': False,
+        'quiet': False,
         'no_color': True,
         
         # Retry settings
-        'retries': 3,
-        'fragment_retries': 3,
+        'retries': 5,
+        'fragment_retries': 5,
         
         # Output options
         'noplaylist': True,
         'merge_output_format': 'mp4',
         
-        # Extractor options for YouTube (Prioritize Android/iOS for VPS)
-        # Extractor options for YouTube (iOS client is most robust for VPS)
+        # CRITICAL: Use ONLY Android client - this bypasses most VPS blocks
         'extractor_args': {
             'youtube': {
-                'player_client': ['ios'],
-                'skip': ['dash', 'hls'],
+                'player_client': ['android', 'android_embedded'],
             }
         },
         
-        # Cache settings
+        # Cache settings - disable to prevent stale data
         'cachedir': False,
     }
     
@@ -108,9 +103,8 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
     if output_template:
         opts['outtmpl'] = output_template
     
-    # Add cookies if available
-    if os.path.exists(COOKIES_FILE):
-        opts['cookiefile'] = COOKIES_FILE
+    # NOTE: Do NOT use cookies for Android client - it causes mismatches
+    # Cookies are for browser sessions, not app impersonation
     
     return opts
 
@@ -119,51 +113,52 @@ def get_video_info(url: str) -> dict:
     """Extract video information using yt-dlp Python library with retries"""
     import yt_dlp
     
-    # helper to get opts
-    def get_opts(client='android', disable_cookies=False):
-        opts = get_ydl_opts()
-        opts['skip_download'] = True
-        opts['extract_flat'] = False
-        
-        # Enforce client
-        opts['extractor_args'] = {'youtube': {'player_client': [client], 'skip': ['dash', 'hls']}}
-        
-        # Disable cookies if requested
-        if disable_cookies and 'cookiefile' in opts:
-            del opts['cookiefile']
-            
-        return opts
-
-    # Try 1: Android client (with cookies if avail)
+    # Try 1: Standard attempt (with cookies if available)
     try:
-        ydl_opts = get_opts(client='android')
+        ydl_opts = get_ydl_opts()
+        ydl_opts['skip_download'] = True
+        ydl_opts['extract_flat'] = False
+        
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             if info: return info
             
-    except Exception as e:
-        print(f"Attempt 1 (Android) failed: {e}")
+    except Exception as first_error:
+        print(f"Attempt 1 failed: {first_error}")
         
-    # Try 2: Android client WITHOUT cookies
+    # Try 2: Retry WITHOUT cookies (in case cookies are invalid/expired)
     if os.path.exists(COOKIES_FILE):
         try:
-            print("Retrying Android without cookies...")
-            ydl_opts = get_opts(client='android', disable_cookies=True)
+            print("Retrying without cookies...")
+            ydl_opts = get_ydl_opts()
+            ydl_opts['skip_download'] = True
+            ydl_opts['extract_flat'] = False
+            if 'cookiefile' in ydl_opts: del ydl_opts['cookiefile'] # Remove cookies
+            
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info: return info
-        except Exception as e:
-             print(f"Attempt 2 (Android no-cookies) failed: {e}")
+                
+        except Exception as second_error:
+            print(f"Attempt 2 failed: {second_error}")
 
-    # Try 3: iOS client (fallback)
+    # Try 3: Retry with different client (Android) if not already used
     try:
-        print("Retrying with iOS client...")
-        ydl_opts = get_opts(client='ios', disable_cookies=True)
+        print("Retrying with Android client...")
+        ydl_opts = get_ydl_opts()
+        ydl_opts['skip_download'] = True
+        ydl_opts['extract_flat'] = False
+        if 'cookiefile' in ydl_opts: del ydl_opts['cookiefile']
+        
+        # Force Android client
+        ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android']}}
+        
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             if info: return info
-    except Exception as e:
-         raise Exception(f"All attempts failed. Last error: {str(e)}")
+            
+    except Exception as third_error:
+         raise Exception(f"All attempts failed. Last error: {str(third_error)}")
     
     raise Exception("Failed to get video info after retries")
 
