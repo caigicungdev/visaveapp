@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useLanguage } from '@/components/language-provider';
 import { Github, Twitter, MessageCircle } from 'lucide-react';
 
+import Image from 'next/image';
+
 export function SiteFooter() {
     const { t } = useLanguage();
 
@@ -12,7 +14,15 @@ export function SiteFooter() {
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
                     <div className="space-y-4">
-                        <h3 className="font-bold text-lg text-foreground">ViSaveApp</h3>
+                        <Link href="/" className="inline-block">
+                            <Image
+                                src="/assets/logo-vtool.png"
+                                alt="Visave App Logo"
+                                width={140}
+                                height={40}
+                                className="h-10 w-auto object-contain"
+                            />
+                        </Link>
                         <p className="text-sm text-muted-foreground leading-relaxed">
                             {t.footer.aboutDesc}
                         </p>
@@ -51,7 +61,7 @@ export function SiteFooter() {
                     <div>
                         <h4 className="font-semibold text-foreground mb-4">{t.footer.contact}</h4>
                         <ul className="space-y-2 text-sm text-muted-foreground">
-                            <li><a href="mailto:support@visave.io" className="hover:text-violet-400 transition-colors">support@visave.io</a></li>
+                            <li><a href="mailto:visaveapp.org@gmail.com" className="hover:text-violet-400 transition-colors">visaveapp.org@gmail.com</a></li>
                         </ul>
                     </div>
                 </div>
