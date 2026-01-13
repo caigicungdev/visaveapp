@@ -55,9 +55,13 @@ async def fail_task(task_id: str, error_message: str):
     })
 
 
+# Path to cookies file inside Docker container
+COOKIES_PATH = "/app/cookies.txt"
+
+
 # Common yt-dlp options for VPS compatibility
 def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
-    """Get yt-dlp options with Android/iOS client to bypass VPS blocks"""
+    """Get yt-dlp options with Android/iOS client + cookies to bypass VPS blocks"""
     opts = {
         # Format selection
         'format': format_str or 'bestvideo+bestaudio/best',
@@ -82,6 +86,13 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
         'fragment_retries': 5,
         'cachedir': False,
     }
+    
+    # Add cookies file if it exists (CRITICAL for VPS to prove "real user")
+    if os.path.exists(COOKIES_PATH):
+        opts['cookiefile'] = COOKIES_PATH
+        print(f"✅ Using cookies from: {COOKIES_PATH}")
+    else:
+        print(f"⚠️ No cookies found at: {COOKIES_PATH}")
     
     # Add output template if provided
     if output_template:
