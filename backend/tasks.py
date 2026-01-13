@@ -115,59 +115,55 @@ def get_ydl_opts(output_template: str = None, format_str: str = None) -> dict:
     return opts
 
 
-    return opts
-
-
 def get_video_info(url: str) -> dict:
     """Extract video information using yt-dlp Python library with retries"""
     import yt_dlp
     
-    # Try 1: Standard attempt (with cookies if available)
-    try:
-        ydl_opts = get_ydl_opts()
-        ydl_opts['skip_download'] = True
-        ydl_opts['extract_flat'] = False
+    # helper to get opts
+    def get_opts(client='android', disable_cookies=False):
+        opts = get_ydl_opts()
+        opts['skip_download'] = True
+        opts['extract_flat'] = False
         
+        # Enforce client
+        opts['extractor_args'] = {'youtube': {'player_client': [client], 'skip': ['dash', 'hls']}}
+        
+        # Disable cookies if requested
+        if disable_cookies and 'cookiefile' in opts:
+            del opts['cookiefile']
+            
+        return opts
+
+    # Try 1: Android client (with cookies if avail)
+    try:
+        ydl_opts = get_opts(client='android')
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             if info: return info
             
-    except Exception as first_error:
-        print(f"Attempt 1 failed: {first_error}")
+    except Exception as e:
+        print(f"Attempt 1 (Android) failed: {e}")
         
-    # Try 2: Retry WITHOUT cookies (in case cookies are invalid/expired)
+    # Try 2: Android client WITHOUT cookies
     if os.path.exists(COOKIES_FILE):
         try:
-            print("Retrying without cookies...")
-            ydl_opts = get_ydl_opts()
-            ydl_opts['skip_download'] = True
-            ydl_opts['extract_flat'] = False
-            if 'cookiefile' in ydl_opts: del ydl_opts['cookiefile'] # Remove cookies
-            
+            print("Retrying Android without cookies...")
+            ydl_opts = get_opts(client='android', disable_cookies=True)
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info: return info
-                
-        except Exception as second_error:
-            print(f"Attempt 2 failed: {second_error}")
+        except Exception as e:
+             print(f"Attempt 2 (Android no-cookies) failed: {e}")
 
-    # Try 3: Retry with different client (Android) if not already used
+    # Try 3: iOS client (fallback)
     try:
-        print("Retrying with Android client...")
-        ydl_opts = get_ydl_opts()
-        ydl_opts['skip_download'] = True
-        ydl_opts['extract_flat'] = False
-        if 'cookiefile' in ydl_opts: del ydl_opts['cookiefile']
-        
-        # Force Android client
-        ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android']}}
-        
+        print("Retrying with iOS client...")
+        ydl_opts = get_opts(client='ios', disable_cookies=True)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             if info: return info
-            
-    except Exception as third_error:
-         raise Exception(f"All attempts failed. Last error: {str(third_error)}")
+    except Exception as e:
+         raise Exception(f"All attempts failed. Last error: {str(e)}")
     
     raise Exception("Failed to get video info after retries")
 
