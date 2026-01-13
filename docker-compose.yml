@@ -4,7 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        - NEXT_PUBLIC_API_URL=https://${DOMAIN}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://visaveapp.com}
+        - NEXT_PUBLIC_ADSENSE_ID=${NEXT_PUBLIC_ADSENSE_ID}
     container_name: vtool-frontend
     restart: unless-stopped
     environment:

@@ -78,7 +78,7 @@ export const metadata: Metadata = {
   },
   verification: {
     other: {
-      "google-adsense-account": "ca-pub-3779491168688544",
+      "google-adsense-account": process.env.NEXT_PUBLIC_ADSENSE_ID || "",
     },
   },
   icons: {
@@ -107,12 +107,14 @@ export default function RootLayout({
             </LanguageProvider>
           </AuthProvider>
         </QueryProvider>
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3779491168688544"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
+        {process.env.NEXT_PUBLIC_ADSENSE_ID && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );
