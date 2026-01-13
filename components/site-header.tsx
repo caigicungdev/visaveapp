@@ -37,7 +37,7 @@ export function SiteHeader() {
                 <div className="container mx-auto px-4 py-3 sm:py-0 sm:h-24 md:h-28 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 sm:gap-0">
                     <div className="flex items-center justify-center w-full sm:w-auto">
                         <Image
-                            src="/assets/b-logo.png"
+                            src="/assets/logo-vtool.png"
                             alt="Visave App Logo"
                             width={200}
                             height={80}
