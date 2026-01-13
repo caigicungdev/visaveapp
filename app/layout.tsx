@@ -1,6 +1,5 @@
-import { JsonLd } from "@/components/json-ld";
+import type { Metadata } from "next";
 import Script from "next/script";
-import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/providers/query-provider";
 import { AuthProvider } from "@/providers/auth-provider";
