@@ -55,82 +55,168 @@ async def fail_task(task_id: str, error_message: str):
     })
 
 
+# =============================================================================
+# YT-DLP ROBUST CONFIGURATION FOR VPS
+# =============================================================================
+# These options are designed to maximize compatibility when running from
+# data center IPs (VPS) where YouTube and other platforms may restrict access.
+
+def get_base_ydl_opts() -> dict:
+    """
+    Returns base yt-dlp options optimized for VPS/data center environments.
+    Includes fake User-Agent, SSL bypass, and robust error handling.
+    """
+    opts = {
+        # Mimic a real browser to avoid bot detection
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+        },
+        
+        # SSL/Network options for VPS compatibility
+        'nocheckcertificate': True,  # Ignore SSL errors
+        'ignoreerrors': False,       # Stop on errors
+        'no_warnings': True,         # Suppress warnings
+        'quiet': True,               # Quiet output
+        'no_color': True,            # No color in output
+        
+        # YouTube specific options
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['web', 'android', 'ios'],  # Try multiple clients
+                'skip': ['hls', 'dash'],  # Skip problematic formats
+            }
+        },
+        
+        # Geo bypass for restricted content
+        'geo_bypass': True,
+        'geo_bypass_country': 'US',
+        
+        # Retry options
+        'retries': 3,
+        'fragment_retries': 3,
+        
+        # Playlist handling
+        'noplaylist': True,
+    }
+    
+    # Add cookies if available
+    if os.path.exists(COOKIES_FILE):
+        opts['cookiefile'] = COOKIES_FILE
+    
+    return opts
+
+
 def get_video_info(url: str) -> dict:
-    """Extract video information using yt-dlp"""
+    """
+    Extract video information using yt-dlp Python library.
+    Uses robust options for VPS compatibility.
+    """
+    import yt_dlp
+    
+    ydl_opts = get_base_ydl_opts()
+    ydl_opts.update({
+        'skip_download': True,
+        'extract_flat': False,
+    })
+    
     try:
-        cmd = [
-            "yt-dlp",
-            "--dump-json",
-            "--no-download",
-            "--no-warnings",
-            "--extractor-args", "youtube:player_client=web",
-        ]
-        # Add cookies for YouTube authentication if available
-        if os.path.exists(COOKIES_FILE):
-            cmd.extend(["--cookies", COOKIES_FILE])
-        cmd.append(url)
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-        if result.returncode == 0:
-            return json.loads(result.stdout)
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return info
+    except yt_dlp.utils.DownloadError as e:
+        error_msg = str(e)
+        # Provide user-friendly error messages
+        if 'Sign in to confirm' in error_msg or 'bot' in error_msg.lower():
+            raise Exception("YouTube requires verification. This video may be restricted for automated downloads.")
+        elif 'Private video' in error_msg:
+            raise Exception("This video is private and cannot be downloaded.")
+        elif 'Video unavailable' in error_msg:
+            raise Exception("This video is unavailable or has been removed.")
         else:
-            raise Exception(result.stderr or "Failed to get video info")
-    except subprocess.TimeoutExpired:
-        raise Exception("Timeout while fetching video info")
-    except json.JSONDecodeError:
-        raise Exception("Failed to parse video info")
+            raise Exception(f"Failed to get video info: {error_msg}")
+    except Exception as e:
+        raise Exception(f"Failed to get video info: {str(e)}")
 
 
 def download_video(url: str, task_id: str, options: dict = None) -> dict:
-    """Download video using yt-dlp with format options"""
+    """
+    Download video using yt-dlp Python library with robust fallback formats.
+    Optimized for VPS environments with multiple format fallback strategies.
+    """
+    import yt_dlp
+    
     options = options or {}
     output_template = os.path.join(DOWNLOAD_DIR, f"{task_id}.%(ext)s")
     
-    # Determine format string
     format_type = options.get('format', 'video')
     ytdlp_format = options.get('ytdlp_format')
     audio_bitrate = options.get('audio_bitrate', '320')
     
+    # Get base options
+    ydl_opts = get_base_ydl_opts()
+    ydl_opts['outtmpl'] = output_template
+    
     if format_type == 'audio':
-        # Audio download
-        cmd = [
-            "yt-dlp",
-            "-f", "bestaudio/best",
-            "-o", output_template,
-            "--no-warnings",
-            "--no-playlist",
-            "--extractor-args", "youtube:player_client=web",
-            "-x",
-            "--audio-format", "mp3",
-            "--audio-quality", f"{audio_bitrate}K" if audio_bitrate else "320K",
-        ]
-        if os.path.exists(COOKIES_FILE):
-            cmd.extend(["--cookies", COOKIES_FILE])
+        # Audio download with robust format selection
+        ydl_opts.update({
+            # Try best audio, fallback to any audio, then best overall
+            'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': audio_bitrate,
+            }],
+        })
     else:
-        # Video download with quality
+        # Video download with robust fallback chain
         if ytdlp_format:
             format_str = ytdlp_format
         else:
-            # Use 'best' which is always available on all platforms
-            format_str = "best"
+            # Robust format string with multiple fallbacks:
+            # 1. Best video + best audio (merge)
+            # 2. Best pre-merged format up to 1080p
+            # 3. Best pre-merged format (any quality)
+            # 4. Any available format
+            format_str = (
+                'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/'
+                'bestvideo[height<=1080]+bestaudio/'
+                'bestvideo+bestaudio/'
+                'best[height<=1080][ext=mp4]/'
+                'best[height<=1080]/'
+                'best[ext=mp4]/'
+                'best/'
+                'worst'  # Ultimate fallback
+            )
         
-        cmd = [
-            "yt-dlp",
-            "-f", format_str,
-            "-o", output_template,
-            "--no-warnings",
-            "--no-playlist",
-            "--extractor-args", "youtube:player_client=web",
-            "--merge-output-format", "mp4",
-        ]
-        if os.path.exists(COOKIES_FILE):
-            cmd.extend(["--cookies", COOKIES_FILE])
+        ydl_opts.update({
+            'format': format_str,
+            'merge_output_format': 'mp4',
+            # FFmpeg options for merging
+            'postprocessor_args': {
+                'ffmpeg': ['-c:v', 'copy', '-c:a', 'aac']
+            },
+        })
     
-    cmd.append(url)
-    
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-    
-    if result.returncode != 0:
-        raise Exception(result.stderr or "Download failed")
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+    except yt_dlp.utils.DownloadError as e:
+        error_msg = str(e)
+        if 'Sign in to confirm' in error_msg or 'bot' in error_msg.lower():
+            raise Exception("YouTube requires verification. Try using TikTok or Instagram instead.")
+        elif 'format is not available' in error_msg.lower():
+            raise Exception("No compatible video format available. The platform may be blocking this download.")
+        else:
+            raise Exception(f"Download failed: {error_msg}")
     
     # Find the downloaded file
     for f in os.listdir(DOWNLOAD_DIR):
