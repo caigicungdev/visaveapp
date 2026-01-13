@@ -145,7 +145,7 @@ def get_video_info(url: str) -> dict:
 
 
 def download_video(url: str, task_id: str, options: dict = None) -> dict:
-    """Download video using yt-dlp Python library with robust retries"""
+    """Download video using yt-dlp - uses PROXY to bypass YouTube blocks"""
     import yt_dlp
     
     options = options or {}
@@ -156,100 +156,45 @@ def download_video(url: str, task_id: str, options: dict = None) -> dict:
     ytdlp_format = options.get('ytdlp_format')
     audio_bitrate = options.get('audio_bitrate', '320')
     
-    # Helper to get opts
-    def get_opts_for_attempt(client=None, use_cookies=True):
-        if format_type == 'audio':
-            f_str = 'bestaudio/best'
-            opts = get_ydl_opts(output_template, f_str)
-            opts['postprocessors'] = [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': audio_bitrate or '320',
-            }]
-        else:
-            if ytdlp_format:
-                f_str = f"{ytdlp_format}/bestvideo+bestaudio/best"
-            else:
-                f_str = 'bestvideo+bestaudio/bestvideo*+bestaudio/best/bestvideo/bestaudio'
-            opts = get_ydl_opts(output_template, f_str)
-            
-        if not use_cookies and 'cookiefile' in opts:
-            del opts['cookiefile']
-            
-        if client:
-            opts['extractor_args'] = {'youtube': {'player_client': [client]}}
-            
-        return opts
-
-    # Attempt 1: Default (with cookies if avail, iOS/Android priority)
-    try:
-        ydl_opts = get_opts_for_attempt()
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-            return _find_downloaded_file(task_id)
-    except Exception as e:
-        print(f"Download Attempt 1 failed: {e}")
-
-    # Attempt 2: Without cookies (if they existed)
-    if os.path.exists(COOKIES_FILE):
-        try:
-            ydl_opts = get_opts_for_attempt(use_cookies=False)
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
-                return _find_downloaded_file(task_id)
-        except Exception as e:
-            print(f"Download Attempt 2 failed: {e}")
-
-    # Attempt 3: Android client, no cookies (often best for VPS)
-    try:
-        ydl_opts = get_opts_for_attempt(client='android', use_cookies=False)
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-            return _find_downloaded_file(task_id)
-    except Exception as e:
-        raise Exception(f"All download attempts failed. Last error: {str(e)}")
-
-
-def _find_downloaded_file(task_id: str) -> dict:
-    """Helper to find the downloaded file for a task"""
-    import yt_dlp
-    
-    options = options or {}
-    output_template = os.path.join(DOWNLOAD_DIR, f"{task_id}.%(ext)s")
-    
-    # Determine format string
-    format_type = options.get('format', 'video')
-    ytdlp_format = options.get('ytdlp_format')
-    audio_bitrate = options.get('audio_bitrate', '320')
-    
+    # Build format string
     if format_type == 'audio':
-        # Audio download with robust format fallbacks
         format_str = 'bestaudio/best'
-        ydl_opts = get_ydl_opts(output_template, format_str)
+    elif ytdlp_format:
+        format_str = f"{ytdlp_format}/bestvideo+bestaudio/best"
+    else:
+        format_str = 'bestvideo+bestaudio/bestvideo*+bestaudio/best/bestvideo/bestaudio'
+    
+    # Check if this is a YouTube URL
+    is_youtube = 'youtube.com' in url or 'youtu.be' in url
+    
+    # Use proxy for YouTube (blocks both info AND download)
+    use_proxy = is_youtube and bool(PROXY_URL)
+    
+    ydl_opts = get_ydl_opts(output_template, format_str, use_proxy=use_proxy)
+    
+    # Add audio post-processor if needed
+    if format_type == 'audio':
         ydl_opts['postprocessors'] = [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': audio_bitrate or '320',
         }]
+    
+    if use_proxy:
+        print(f"📡 Downloading with PROXY...")
     else:
-        # Video download with quality fallbacks
-        if ytdlp_format:
-            format_str = f"{ytdlp_format}/bestvideo+bestaudio/best"
-        else:
-            # Robust format with multiple fallbacks
-            format_str = 'bestvideo+bestaudio/bestvideo*+bestaudio/best/bestvideo/bestaudio'
-        
-        ydl_opts = get_ydl_opts(output_template, format_str)
+        print(f"🔄 Downloading with DIRECT connection...")
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-    except yt_dlp.utils.DownloadError as e:
-        raise Exception(f"Download failed: {str(e)}")
+            return _find_downloaded_file(task_id)
     except Exception as e:
-        raise Exception(f"Download error: {str(e)}")
-    
-    # Find the downloaded file
+        raise Exception(f"Download failed: {str(e)}")
+
+
+def _find_downloaded_file(task_id: str) -> dict:
+    """Helper to find the downloaded file for a task"""
     for f in os.listdir(DOWNLOAD_DIR):
         if f.startswith(task_id):
             filepath = os.path.join(DOWNLOAD_DIR, f)
@@ -258,7 +203,6 @@ def _find_downloaded_file(task_id: str) -> dict:
                 "filename": f,
                 "file_size": os.path.getsize(filepath)
             }
-    
     raise Exception("Downloaded file not found")
 
 
