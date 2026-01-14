@@ -1,15 +1,32 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { FeatureTabs } from '@/components/feature-tabs';
 import { useLanguage } from '@/components/language-provider';
 import { Images, Download, Sparkles, Layers, Smartphone, Zap, ChevronDown } from 'lucide-react';
 
+const tabRoutes: Record<string, string> = {
+    download: '/tiktok-downloader',
+    summary: '/youtube-summary',
+    spy: '/video-spy',
+    slideshow: '/slideshow-downloader',
+    audio: '/vocal-remover',
+    removebg: '/remove-background',
+};
+
 export default function SlideshowDownloaderPage() {
     const { language } = useLanguage();
-    const [activeTab] = useState('slideshow');
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState('slideshow');
+
+    const handleTabChange = (tab: string) => {
+        if (tab !== activeTab && tabRoutes[tab]) {
+            router.push(tabRoutes[tab]);
+        }
+    };
 
     const content = language === 'vi' ? contentVi : contentEn;
 
@@ -31,7 +48,7 @@ export default function SlideshowDownloaderPage() {
 
                     <div className="max-w-5xl mx-auto relative mb-16">
                         <div className="absolute -inset-1 bg-gradient-to-r from-violet-600/20 to-purple-600/20 rounded-3xl blur-2xl opacity-50 pointer-events-none" />
-                        <FeatureTabs activeTab={activeTab} onTabChange={() => { }} />
+                        <FeatureTabs activeTab={activeTab} onTabChange={handleTabChange} />
                     </div>
                 </section>
 

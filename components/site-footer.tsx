@@ -42,10 +42,10 @@ export function SiteFooter() {
                     <div>
                         <h4 className="font-semibold text-foreground mb-4">{t.footer.products}</h4>
                         <ul className="space-y-2 text-sm text-muted-foreground">
-                            <li><a href="#" className="hover:text-violet-400 transition-colors">TikTok Downloader</a></li>
-                            <li><a href="#" className="hover:text-violet-400 transition-colors">YouTube Summary</a></li>
-                            <li><a href="#" className="hover:text-violet-400 transition-colors">Instagram Saver</a></li>
-                            <li><a href="#" className="hover:text-violet-400 transition-colors">Audio Extractor</a></li>
+                            <li><Link href="/tiktok-downloader" className="hover:text-violet-400 transition-colors">TikTok Downloader</Link></li>
+                            <li><Link href="/youtube-summary" className="hover:text-violet-400 transition-colors">YouTube Summary</Link></li>
+                            <li><Link href="/slideshow-downloader" className="hover:text-violet-400 transition-colors">Slideshow Downloader</Link></li>
+                            <li><Link href="/vocal-remover" className="hover:text-violet-400 transition-colors">Audio Extractor</Link></li>
                         </ul>
                     </div>
 
