@@ -1,0 +1,36 @@
+{
+    "name": "Pikachu Illustrator 1998",
+    "description": "The Holy Grail of Pokemon Cards. Only 39 copies were ever released as prizes for the CoroCoro Comic Illustration Contest in 1998. This card represents the pinnacle of RWA (Real World Assets) on CardVerse.",
+    "image": "https://api.visaveapp.com/static/nft/images/pokemon-card.png",
+    "external_url": "https://cardverse.io/card/1",
+    "attributes": [
+        {
+            "trait_type": "Card Name",
+            "value": "Illustrator"
+        },
+        {
+            "trait_type": "Pokemon",
+            "value": "Pikachu"
+        },
+        {
+            "trait_type": "Rarity",
+            "value": "Double Star Promo"
+        },
+        {
+            "trait_type": "Year",
+            "value": "1998"
+        },
+        {
+            "trait_type": "Grading",
+            "value": "PSA 9 MINT"
+        },
+        {
+            "trait_type": "Cert Number",
+            "value": "18518177"
+        },
+        {
+            "trait_type": "Artist",
+            "value": "Atsuko Nishida"
+        }
+    ]
+}
