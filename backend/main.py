@@ -111,6 +111,11 @@ if not os.path.exists("static"):
     os.makedirs("static")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+nft_path = "static/nft"
+if not os.path.exists(nft_path):
+    os.makedirs(nft_path)
+app.mount("/api/nft", StaticFiles(directory=nft_path), name="nft")
+
 @app.get("/")
 async def root():
     """Health check endpoint"""
