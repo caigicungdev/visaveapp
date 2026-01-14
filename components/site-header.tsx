@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useLanguage } from '@/components/language-provider';
@@ -36,14 +37,16 @@ export function SiteHeader() {
             <header className="fixed top-0 w-full z-50 border-b border-white/5 bg-background/60 backdrop-blur-xl">
                 <div className="container mx-auto px-4 py-3 sm:py-0 sm:h-24 md:h-28 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 sm:gap-0">
                     <div className="flex items-center justify-center w-full sm:w-auto">
-                        <Image
-                            src="/assets/logo-vtool.png"
-                            alt="Visave App Logo"
-                            width={200}
-                            height={80}
-                            className="w-40 h-auto sm:w-48 md:w-56 object-contain hover:scale-105 transition-transform duration-300"
-                            priority
-                        />
+                        <Link href="/" className="cursor-pointer">
+                            <Image
+                                src="/assets/logo-vtool.png"
+                                alt="Visave App Logo"
+                                width={200}
+                                height={80}
+                                className="w-40 h-auto sm:w-48 md:w-56 object-contain hover:scale-105 transition-transform duration-300"
+                                priority
+                            />
+                        </Link>
                     </div>
 
                     <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
