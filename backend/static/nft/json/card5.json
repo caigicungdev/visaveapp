@@ -1,0 +1,40 @@
+{
+    "name": "Lugia 1st Edition Neo Genesis",
+    "description": "The seventh spot on our list goes to the Neo Genesis 1st Edition Lugia. This card was originally available by opening Neo Genesis booster packs, which were once sold in local game stores.",
+    "image": "https://api.visaveapp.com/static/nft/images/5.png",
+    "external_url": "https://cardverse.io/card/1",
+    "attributes": [
+        {
+            "trait_type": "Card Name",
+            "value": "Lugia"
+        },
+        {
+            "trait_type": "Pokemon",
+            "value": "Lugia"
+        },
+        {
+            "trait_type": "Rarity",
+            "value": "First Edition"
+        },
+        {
+            "trait_type": "Year",
+            "value": "1998"
+        },
+        {
+            "trait_type": "Grading",
+            "value": "PSA 9 MINT"
+        },
+        {
+            "trait_type": "Cert Number",
+            "value": "0012951626"
+        },
+        {
+            "trait_type": "Artist",
+            "value": "Atsuko Nishida"
+        },
+        {
+            "trait_type": "Est. Value",
+            "value": "$130.558 USD"
+        }
+    ]
+}

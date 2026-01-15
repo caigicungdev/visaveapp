@@ -1,0 +1,40 @@
+{
+    "name": "Kangaskhan Family Event Trophy",
+    "description": "The card’s name, Kangaskhan Family Event Trophy, reflects the tournament’s concept: parents and children teamed up to compete against other Pokémon trainers. This family element is beautifully represented by the image of Kangaskhan and its baby on the card.",
+    "image": "https://api.visaveapp.com/static/nft/images/4.png",
+    "external_url": "https://cardverse.io/card/1",
+    "attributes": [
+        {
+            "trait_type": "Card Name",
+            "value": "Illustrator"
+        },
+        {
+            "trait_type": "Pokemon",
+            "value": "Pikachu"
+        },
+        {
+            "trait_type": "Rarity",
+            "value": "Double Star Promo"
+        },
+        {
+            "trait_type": "Year",
+            "value": "1998"
+        },
+        {
+            "trait_type": "Grading",
+            "value": " PSA – Gem Mint 10"
+        },
+        {
+            "trait_type": "Cert Number",
+            "value": "24655197"
+        },
+        {
+            "trait_type": "Artist",
+            "value": "Atsuko Nishida"
+        },
+        {
+            "trait_type": "Est. Value",
+            "value": "$135.298 USD"
+        }
+    ]
+}
